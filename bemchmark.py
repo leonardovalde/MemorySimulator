@@ -5,6 +5,19 @@ from model.MemoryManager import MemoryManager, Process
 
 class MemoryManagerBenchmark:
     def __init__(self, memory_size, simulation_time, max_process_size, max_process_life_time, delay):
+        """
+        Initializes an instance of the class.
+
+        Parameters:
+            memory_size (int): The size of the memory.
+            simulation_time (int): The time for which the simulation will run.
+            max_process_size (int): The maximum size of a process.
+            max_process_life_time (int): The maximum life time of a process.
+            delay (int): The delay between each simulation step.
+
+        Returns:
+            None
+        """
         self.memory_size = memory_size
         self.simulation_time = simulation_time
         self.max_process_size = max_process_size
@@ -12,6 +25,18 @@ class MemoryManagerBenchmark:
         self.delay = delay
 
     def run_benchmark(self, algorithm_types):
+        """
+        Runs a benchmark for a given list of algorithm types.
+
+        Args:
+            algorithm_types (list): A list of algorithm types to run the benchmark on.
+
+        Returns:
+            dict: A dictionary containing the results of the benchmark. The keys are algorithm types, and the values are dictionaries with the following keys:
+                - 'Utilization': The utilization of the memory manager.
+                - 'Failed Allocations': The number of failed memory allocations.
+                - 'Execution Time': The execution time of the simulation.
+        """
         results = {}
         for algorithm in algorithm_types:
             memory_manager = MemoryManager(self.memory_size, algorithm)
@@ -24,6 +49,18 @@ class MemoryManagerBenchmark:
         return results
 
     def run_simulation(self, memory_manager):
+        """
+        Run simulation for a given memory manager.
+
+        Parameters:
+            memory_manager (MemoryManager): The memory manager object used for simulation.
+
+        Returns:
+            tuple: A tuple containing the average memory utilization, the number of failed allocations, and the execution time.
+                - average_utilization (float): The average memory utilization.
+                - failed_allocations (int): The number of failed allocations.
+                - execution_time (float): The execution time in seconds.
+        """
         start_time = time.time()
         failed_allocations = 0
         total_memory_used = 0
