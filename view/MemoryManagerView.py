@@ -90,6 +90,22 @@ class MemoryManagerGUI:
         delay = float(self.delay_entry.get())
 
         self.memory_manager = MemoryManager(memory_size, algorithm_type)
+        self.memory_manager.clock = 0
+
+        # Reset the graph data
+        self.graph_data = {
+            'clocks': [],
+            'allocations': [],
+            'deallocations': [],
+            'total_memory': [],
+            'free_partitions': [],
+            'occupied_partitions': [],
+        }
+
+        # Clear the existing plot
+        if self.ax:
+            self.ax.clear()
+            self.canvas.draw()
 
         self.simulate_iteration(simulation_time, delay, max_process_size, max_process_life_time)
 
@@ -100,41 +116,50 @@ class MemoryManagerGUI:
             process = Process(f"P{self.memory_manager.clock}", process_size,
                               self.memory_manager.clock + process_life_time)
 
-            if self.memory_manager.allocate_memory(process):
-                self.output_text.insert(tk.END,
-                                        f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
-                self.graph_data['allocations'].append(len(self.memory_manager.partitions))
-            else:
-                self.output_text.insert(tk.END,
-                                        f"Failed to allocate Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
-
-            # Append the memory state information to output_text
-            self.output_text.insert(tk.END, f"Memory State at clock {self.memory_manager.clock}:\n")
-            for i, partition in enumerate(self.memory_manager.partitions):
-                status = f"Partition {i}: Size = {partition.size}, "
-                if partition.is_free():
-                    status += "Status = Free"
-                else:
-                    status += f"Status = Occupied by Process {partition.process.id}, Ends at {partition.end_time}"
-                self.output_text.insert(tk.END, status + "\n")
-            self.output_text.insert(tk.END, "-" * 50 + "\n")
-
+            allocation_success = self.memory_manager.allocate_memory(process)
             self.memory_manager.deallocate_memory()
+
+            # Update the output text and graph data
+            self.update_output_text(process, allocation_success)
+            self.update_graph_data(allocation_success)
+
             self.memory_manager.clock += 1
-            self.graph_data['deallocations'].append(len(self.memory_manager.partitions))
-            # Update graph data
-            self.graph_data['clocks'].append(self.memory_manager.clock)
-            self.graph_data['total_memory'].append(sum(partition.size for partition in self.memory_manager.partitions))
-            self.graph_data['free_partitions'].append(
-                sum(1 for partition in self.memory_manager.partitions if partition.is_free()))
-            self.graph_data['occupied_partitions'].append(
-                sum(1 for partition in self.memory_manager.partitions if not partition.is_free()))
 
             self.update_memory_stats()
             self.show_graph()
 
             self.root.after(int(delay * 1000), self.simulate_iteration, simulation_time, delay, max_process_size,
                             max_process_life_time)
+
+    def update_output_text(self, process, allocation_success):
+        if allocation_success:
+            self.output_text.insert(tk.END,
+                                    f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+        else:
+            self.output_text.insert(tk.END,
+                                    f"Failed to allocate Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+
+        # Append the memory state information to output_text
+        self.output_text.insert(tk.END, f"Memory State at clock {self.memory_manager.clock}:\n")
+        for i, partition in enumerate(self.memory_manager.partitions):
+            status = f"Partition {i}: Size = {partition.size}, "
+            if partition.is_free():
+                status += "Status = Free"
+            else:
+                status += f"Status = Occupied by Process {partition.process.id}, Ends at {partition.end_time}"
+            self.output_text.insert(tk.END, status + "\n")
+        self.output_text.insert(tk.END, "-" * 50 + "\n")
+
+    def update_graph_data(self, allocation_success):
+        # Update graph data
+        self.graph_data['clocks'].append(self.memory_manager.clock)
+        self.graph_data['allocations'].append(len([p for p in self.memory_manager.partitions if not p.is_free()]))
+        self.graph_data['deallocations'].append(len([p for p in self.memory_manager.partitions if p.is_free()]))
+        self.graph_data['total_memory'].append(sum(partition.size for partition in self.memory_manager.partitions))
+        self.graph_data['free_partitions'].append(
+            sum(1 for partition in self.memory_manager.partitions if partition.is_free()))
+        self.graph_data['occupied_partitions'].append(
+            sum(1 for partition in self.memory_manager.partitions if not partition.is_free()))
 
     def update_memory_stats(self):
         # Calculate and update memory statistics
