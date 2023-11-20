@@ -57,6 +57,7 @@ class MemoryManagerGUI:
         
 
     def start_simulation(self):
+        self.output_text.insert(tk.END, "")
         memory_size = int(self.memory_size_entry.get())
         algorithm_type = self.algorithm_type_combobox.get()
         max_process_size = int(self.max_process_size_entry.get())
@@ -72,16 +73,34 @@ class MemoryManagerGUI:
         if self.memory_manager.clock < simulation_time:
             process_size = random.randint(1, max_process_size)
             process_life_time = random.randint(1, max_process_life_time)
-            process = Process(f"P{self.memory_manager.clock}", process_size, self.memory_manager.clock + process_life_time)
+            process = Process(f"P{self.memory_manager.clock}", process_size,
+                              self.memory_manager.clock + process_life_time)
 
             if self.memory_manager.allocate_memory(process):
-                self.output_text.insert(tk.END, f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+                self.output_text.insert(tk.END,
+                                        f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
             else:
-                self.output_text.insert(tk.END, f"Failed to allocate Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+                self.output_text.insert(tk.END,
+                                        f"Failed to allocate Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+
+            self.output_text.delete(1.0, tk.END)
+
+            # Append the memory state information to output_text
+            self.output_text.insert(tk.END, f"Memory State at clock {self.memory_manager.clock}:\n")
+            for i, partition in enumerate(self.memory_manager.partitions):
+                status = f"Partition {i}: Size = {partition.size}, "
+                if partition.is_free():
+                    status += "Status = Free"
+                else:
+                    status += f"Status = Occupied by Process {partition.process.id}, Ends at {partition.end_time}"
+                self.output_text.insert(tk.END, status + "\n")
+            self.output_text.insert(tk.END, "-" * 50 + "\n")
 
             self.memory_manager.deallocate_memory()
             self.memory_manager.clock += 1
-            self.root.after(int(delay * 1000), self.simulate_iteration, simulation_time, delay, max_process_size, max_process_life_time)
+            self.root.after(int(delay * 1000), self.simulate_iteration, simulation_time, delay, max_process_size,
+                            max_process_life_time)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
