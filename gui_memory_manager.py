@@ -2,21 +2,45 @@ import tkinter as tk
 from tkinter import ttk
 from MemoryManager import MemoryManager, Process
 import random
-import time
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 class MemoryManagerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Memory Manager GUI")
 
+        # Frame for memory statistics
+        stats_frame = ttk.Frame(self.root, padding="10")
+        stats_frame.grid(row=1, column=1, sticky="w")
+
+        # Memory statistics text
+        self.stats_text = tk.Text(stats_frame, height=10, width=50)
+        self.stats_text.grid(row=0, column=0)
+
+        # Matplotlib initialization
+        self.fig, self.ax = Figure(), None
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
+        self.canvas.get_tk_widget().grid(row=0, column=2, sticky="w")
+
         self.create_widgets()
 
+        # Initialize graph data
+        self.graph_data = {
+            'clocks': [],
+            'allocations': [],
+            'deallocations': [],
+            'total_memory': [],
+            'free_partitions': [],
+            'occupied_partitions': [],
+        }
+
     def create_widgets(self):
-        # Frame para la configuración
+        # Frame for configuration
         config_frame = ttk.Frame(self.root, padding="10")
         config_frame.grid(row=0, column=0, sticky="w")
 
-        # Configuración de la simulación
+        # Configuration for simulation
         ttk.Label(config_frame, text="Memory Size:").grid(row=0, column=0, sticky="w")
         self.memory_size_entry = ttk.Entry(config_frame)
         self.memory_size_entry.grid(row=0, column=1, padx=5)
@@ -42,19 +66,17 @@ class MemoryManagerGUI:
         self.delay_entry = ttk.Entry(config_frame)
         self.delay_entry.grid(row=5, column=1, padx=5)
 
-        # Botón para iniciar la simulación
+        # Button to start simulation
         start_button = ttk.Button(config_frame, text="Start Simulation", command=self.start_simulation)
         start_button.grid(row=6, columnspan=2, pady=10)
 
-        # Frame para la salida
+        # Frame for the output
         output_frame = ttk.Frame(self.root, padding="10")
         output_frame.grid(row=0, column=1, sticky="w")
 
-        # Salida de la simulación
+        # Output of the simulation
         self.output_text = tk.Text(output_frame, height=20, width=50)
         self.output_text.grid(row=0, column=0)
-
-        
 
     def start_simulation(self):
         self.output_text.insert(tk.END, "")
@@ -79,11 +101,10 @@ class MemoryManagerGUI:
             if self.memory_manager.allocate_memory(process):
                 self.output_text.insert(tk.END,
                                         f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
+                self.graph_data['allocations'].append(len(self.memory_manager.partitions))
             else:
                 self.output_text.insert(tk.END,
                                         f"Failed to allocate Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
-
-            self.output_text.delete(1.0, tk.END)
 
             # Append the memory state information to output_text
             self.output_text.insert(tk.END, f"Memory State at clock {self.memory_manager.clock}:\n")
@@ -96,11 +117,84 @@ class MemoryManagerGUI:
                 self.output_text.insert(tk.END, status + "\n")
             self.output_text.insert(tk.END, "-" * 50 + "\n")
 
+
+
             self.memory_manager.deallocate_memory()
             self.memory_manager.clock += 1
+            self.graph_data['deallocations'].append(len(self.memory_manager.partitions))
+            # Update graph data
+            self.graph_data['clocks'].append(self.memory_manager.clock)
+            self.graph_data['total_memory'].append(sum(partition.size for partition in self.memory_manager.partitions))
+            self.graph_data['free_partitions'].append(
+                sum(1 for partition in self.memory_manager.partitions if partition.is_free()))
+            self.graph_data['occupied_partitions'].append(
+                sum(1 for partition in self.memory_manager.partitions if not partition.is_free()))
+
+            self.update_memory_stats()
+            self.show_graph()
+
             self.root.after(int(delay * 1000), self.simulate_iteration, simulation_time, delay, max_process_size,
                             max_process_life_time)
 
+    def update_memory_stats(self):
+        # Calculate and update memory statistics
+        total_memory = sum(partition.size for partition in self.memory_manager.partitions)
+        allocated_memory = sum(
+            partition.size for partition in self.memory_manager.partitions if not partition.is_free())
+        unallocated_memory = total_memory - allocated_memory
+        percentage_unallocated = (unallocated_memory / total_memory) * 100
+
+        # Update the memory statistics text
+        stats_info = f"Total Memory: {total_memory}\n"
+        stats_info += f"Allocated Memory: {allocated_memory}\n"
+        stats_info += f"Unallocated Memory: {unallocated_memory}\n"
+        stats_info += f"Percentage Unallocated: {percentage_unallocated:.2f}%\n"
+
+        self.stats_text.delete(1.0, tk.END)
+        self.stats_text.insert(tk.END, stats_info)
+
+    def evaluate_performance(self):
+        # Analyze and display performance metrics
+        # For example, you can calculate and display average waiting time, response time, etc.
+        waiting_times = [...]  # List of waiting times for each allocated process
+        response_times = [...]  # List of response times for each allocated process
+
+        avg_waiting_time = sum(waiting_times) / len(waiting_times) if waiting_times else 0
+        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+
+        # Display performance metrics
+        performance_info = f"Average Waiting Time: {avg_waiting_time:.2f}\n"
+        performance_info += f"Average Response Time: {avg_response_time:.2f}\n"
+
+        self.stats_text.insert(tk.END, performance_info)
+
+    def show_graph(self):
+        # Extract data for the graph
+        clocks = self.graph_data['clocks']
+        allocations = self.graph_data['allocations']
+        deallocations = self.graph_data['deallocations']
+        total_memory = self.graph_data['total_memory']
+        free_partitions = self.graph_data['free_partitions']
+        occupied_partitions = self.graph_data['occupied_partitions']
+
+        # Plotting
+        if not self.ax:
+            self.ax = self.fig.add_subplot(111)
+
+        self.ax.clear()
+        self.ax.plot(clocks, allocations, label='Allocations')
+        self.ax.plot(clocks, deallocations, label='Deallocations')
+        self.ax.plot(clocks, total_memory, label='Total Memory')
+        self.ax.plot(clocks, free_partitions, label='Free Partitions')
+        self.ax.plot(clocks, occupied_partitions, label='Occupied Partitions')
+        # Add more metrics as needed
+
+        self.ax.set_xlabel('Clock Time')
+        self.ax.set_ylabel('Count')
+        self.ax.legend()
+
+        # Draw the updated graph
+        self.canvas.draw()
 
 if __name__ == "__main__":
     root = tk.Tk()
