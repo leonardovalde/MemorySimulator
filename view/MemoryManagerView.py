@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
-from MemoryManager import MemoryManager, Process
+from model.MemoryManager import MemoryManager, Process
 import random
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+
 
 class MemoryManagerGUI:
     def __init__(self, root):
@@ -46,7 +47,8 @@ class MemoryManagerGUI:
         self.memory_size_entry.grid(row=0, column=1, padx=5)
 
         ttk.Label(config_frame, text="Algorithm Type:").grid(row=1, column=0, sticky="w")
-        self.algorithm_type_combobox = ttk.Combobox(config_frame, values=["first-fit", "best-fit", "worst-fit", "next-fit"])
+        self.algorithm_type_combobox = ttk.Combobox(config_frame,
+                                                    values=["first-fit", "best-fit", "worst-fit", "next-fit"])
         self.algorithm_type_combobox.grid(row=1, column=1, padx=5)
         self.algorithm_type_combobox.set("first-fit")
 
@@ -116,8 +118,6 @@ class MemoryManagerGUI:
                     status += f"Status = Occupied by Process {partition.process.id}, Ends at {partition.end_time}"
                 self.output_text.insert(tk.END, status + "\n")
             self.output_text.insert(tk.END, "-" * 50 + "\n")
-
-
 
             self.memory_manager.deallocate_memory()
             self.memory_manager.clock += 1
@@ -195,6 +195,7 @@ class MemoryManagerGUI:
 
         # Draw the updated graph
         self.canvas.draw()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
