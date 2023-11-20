@@ -8,6 +8,15 @@ from matplotlib.figure import Figure
 
 class MemoryManagerGUI:
     def __init__(self, root):
+        """
+        Initializes the Memory Manager GUI.
+
+        Args:
+            root (tk.Tk): The root window for the GUI.
+
+        Returns:
+            None
+        """
         self.root = root
         self.root.title("Memory Manager GUI")
 
@@ -37,6 +46,15 @@ class MemoryManagerGUI:
         }
 
     def create_widgets(self):
+        """
+        Create widgets for the GUI interface.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         # Frame for configuration
         config_frame = ttk.Frame(self.root, padding="10")
         config_frame.grid(row=0, column=0, sticky="w")
@@ -81,6 +99,15 @@ class MemoryManagerGUI:
         self.output_text.grid(row=0, column=0)
 
     def start_simulation(self):
+        """
+        Executes the simulation of a memory management system.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         self.output_text.insert(tk.END, "")
         memory_size = int(self.memory_size_entry.get())
         algorithm_type = self.algorithm_type_combobox.get()
@@ -110,6 +137,18 @@ class MemoryManagerGUI:
         self.simulate_iteration(simulation_time, delay, max_process_size, max_process_life_time)
 
     def simulate_iteration(self, simulation_time, delay, max_process_size, max_process_life_time):
+        """
+        Simulates an iteration of the process allocation and deallocation in the memory manager.
+
+        Parameters:
+            simulation_time (int): The maximum simulation time.
+            delay (float): The delay between iterations in seconds.
+            max_process_size (int): The maximum size of a process.
+            max_process_life_time (int): The maximum life time of a process.
+
+        Returns:
+            None
+        """
         if self.memory_manager.clock < simulation_time:
             process_size = random.randint(1, max_process_size)
             process_life_time = random.randint(1, max_process_life_time)
@@ -132,6 +171,16 @@ class MemoryManagerGUI:
                             max_process_life_time)
 
     def update_output_text(self, process, allocation_success):
+        """
+        Update the output text widget with the allocation result and the memory state information.
+
+        Parameters:
+            process (Process): The process that was allocated or failed to be allocated.
+            allocation_success (bool): A flag indicating whether the allocation was successful.
+
+        Returns:
+            None
+        """
         if allocation_success:
             self.output_text.insert(tk.END,
                                     f"Allocated Process {process.id} of size {process.size} at clock {self.memory_manager.clock}\n")
@@ -151,6 +200,15 @@ class MemoryManagerGUI:
         self.output_text.insert(tk.END, "-" * 50 + "\n")
 
     def update_graph_data(self, allocation_success):
+        """
+        Update the graph data based on the allocation success.
+
+        Parameters:
+            allocation_success (bool): A boolean indicating whether the allocation was successful or not.
+
+        Returns:
+            None
+        """
         # Update graph data
         self.graph_data['clocks'].append(self.memory_manager.clock)
         self.graph_data['allocations'].append(len([p for p in self.memory_manager.partitions if not p.is_free()]))
@@ -162,6 +220,21 @@ class MemoryManagerGUI:
             sum(1 for partition in self.memory_manager.partitions if not partition.is_free()))
 
     def update_memory_stats(self):
+        """
+        Update the memory statistics based on the current state of the memory manager.
+
+        Calculates and updates the total memory, allocated memory, unallocated memory, and percentage of unallocated memory.
+        The total memory is calculated as the sum of the sizes of all partitions in the memory manager.
+        The allocated memory is calculated as the sum of the sizes of all non-free partitions in the memory manager.
+        The unallocated memory is calculated as the difference between the total memory and the allocated memory.
+        The percentage of unallocated memory is calculated as the ratio of unallocated memory to total memory, multiplied by 100.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+        """
         # Calculate and update memory statistics
         total_memory = sum(partition.size for partition in self.memory_manager.partitions)
         allocated_memory = sum(
@@ -179,6 +252,18 @@ class MemoryManagerGUI:
         self.stats_text.insert(tk.END, stats_info)
 
     def evaluate_performance(self):
+        """
+        Analyzes and displays performance metrics.
+
+        Calculates and displays the average waiting time and response time based on the provided waiting times
+        and response times for each allocated process.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+        """
         # Analyze and display performance metrics
         # For example, you can calculate and display average waiting time, response time, etc.
         waiting_times = [...]  # List of waiting times for each allocated process
@@ -194,6 +279,22 @@ class MemoryManagerGUI:
         self.stats_text.insert(tk.END, performance_info)
 
     def show_graph(self):
+        """
+        Generates a graph to visualize data from the graph_data attribute.
+        
+        Parameters:
+            None
+            
+        Returns:
+            None
+        
+        This function extracts data from the graph_data attribute, including clocks,
+        allocations, deallocations, total_memory, free_partitions, and occupied_partitions.
+        It then plots the data on a graph using the matplotlib library. The x-axis
+        represents the clock time, while the y-axis represents the count. The data is
+        plotted using different colors and labeled accordingly. Finally, the updated
+        graph is drawn on the canvas.
+        """
         # Extract data for the graph
         clocks = self.graph_data['clocks']
         allocations = self.graph_data['allocations']

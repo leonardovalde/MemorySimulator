@@ -15,6 +15,11 @@ class MemoryPartition:
         self.end_time = None if process is None else process.life_time
 
     def is_free(self):
+        """
+        Check if the process is free.
+
+        :return: True if the process is free, False otherwise.
+        """
         return self.process is None
 
 class MemoryManager:
@@ -34,7 +39,18 @@ class MemoryManager:
             return self.next_fit(process)
         return False
 
+
+
     def first_fit(self, process):
+        """
+        Finds the first available partition in the memory and assigns a process to it.
+
+        Args:
+            process (Process): The process to be assigned to a partition.
+
+        Returns:
+            bool: True if a partition was found and the process was assigned, False otherwise.
+        """
         for partition in self.partitions:
             if partition.is_free() and partition.size >= process.size:
                 self.assign_process(partition, process)
@@ -42,6 +58,16 @@ class MemoryManager:
         return False
 
     def best_fit(self, process):
+        """
+        Finds the best fit partition for a given process.
+
+        Parameters:
+        - process: The process to be allocated.
+
+        Returns:
+        - True if a best fit partition is found and the process is successfully allocated.
+        - False if no best fit partition is found.
+        """
         best_partition = None
         for partition in self.partitions:
             if partition.is_free() and partition.size >= process.size:
@@ -54,6 +80,15 @@ class MemoryManager:
 
 
     def worst_fit(self, process):
+        """
+        Finds the worst fit partition for a given process.
+
+        Parameters:
+            process (Process): The process to be allocated.
+
+        Returns:
+            bool: True if the process was successfully allocated to a partition, False otherwise.
+        """
         worst_partition = None
         for partition in self.partitions:
             if partition.is_free() and partition.size >= process.size:
@@ -65,6 +100,15 @@ class MemoryManager:
         return False
 
     def next_fit(self, process):
+        """
+        Find the next available partition using the Next Fit algorithm.
+
+        Parameters:
+            process (Process): The process to be allocated.
+
+        Returns:
+            bool: True if the process was successfully allocated to a partition, False otherwise.
+        """
         start_index = self.last_allocated_index if hasattr(self, 'last_allocated_index') else 0
         n = len(self.partitions)
         for i in range(n):
@@ -77,6 +121,16 @@ class MemoryManager:
         return False
     
     def assign_process(self, partition, process):
+        """
+        Assigns a process to a memory partition.
+
+        Parameters:
+            partition (MemoryPartition): The memory partition to assign the process to.
+            process (Process): The process to be assigned.
+
+        Returns:
+            None
+        """
         if partition.size > process.size:
             new_partition = MemoryPartition(partition.start + process.size, partition.size - process.size)
             self.partitions.insert(self.partitions.index(partition) + 1, new_partition)
@@ -85,13 +139,27 @@ class MemoryManager:
         partition.end_time = self.clock + process.life_time
 
     def deallocate_memory(self):
-        # Desasignar memoria de procesos cuyo tiempo de vida ha expirado
+        """
+        Deallocate memory for processes whose lifetime has expired.
+        """
         for partition in self.partitions:
             if partition.process and self.clock >= partition.end_time:
                 partition.process = None
                 partition.end_time = None
 
     def print_memory_state(self):
+        """
+        Print the current state of the memory.
+
+        This function prints the clock value and the status of each partition in the memory.
+        The clock value represents the current time.
+
+        Parameters:
+            self (Memory): The memory object.
+
+        Returns:
+            None: This function does not return anything.
+        """
         print(f"Clock: {self.clock}")
         for i, partition in enumerate(self.partitions):
             status = f"Partition {i}: Size = {partition.size}, "
@@ -103,6 +171,18 @@ class MemoryManager:
         print("-" * 50)
 
     def simulate(self, simulation_time, delay, max_next_process_time, max_process_life_time):
+        """
+        Simulates the memory allocation and deallocation process for a given duration.
+
+        Parameters:
+            simulation_time (int): The total duration of the simulation in clock ticks.
+            delay (float): The delay between each clock tick in seconds.
+            max_next_process_time (int): The maximum number of clock ticks before the next process arrival.
+            max_process_life_time (int): The maximum lifespan of a process in clock ticks.
+
+        Returns:
+            None
+        """
         while self.clock < simulation_time:
             self.print_memory_state()
 
